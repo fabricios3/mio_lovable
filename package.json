@@ -1,0 +1,19 @@
+{
+  "name": "lovable-local",
+  "private": true,
+  "packageManager": "pnpm@9.12.2",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "templates/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "format": "turbo format"
+  },
+  "devDependencies": {
+    "turbo": "^2.4.0"
+  }
+}

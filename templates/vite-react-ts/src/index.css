@@ -1,0 +1,52 @@
+:root {
+  font-family: "Inter", system-ui, sans-serif;
+  background: #0f1218;
+  color: #f2f4f8;
+}
+
+body {
+  margin: 0;
+}
+
+.app {
+  min-height: 100vh;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.app__header {
+  background: #151a23;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.app__main {
+  display: flex;
+  gap: 20px;
+}
+
+.card {
+  background: #151a23;
+  padding: 20px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 320px;
+}
+
+button {
+  background: #7c3aed;
+  border: none;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.studio-highlight {
+  outline: 2px solid #7c3aed !important;
+  cursor: pointer;
+}
