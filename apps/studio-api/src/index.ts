@@ -1,6 +1,5 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
-import sse from "@fastify/sse-v2";
 import { nanoid } from "nanoid";
 import { spawn } from "node:child_process";
 import { promises as fs } from "node:fs";
@@ -79,9 +78,8 @@ const runCommand = async (
   command: string,
   args: string[],
   cwd: string
-): Promise<{ code: number; output: string }>
-  =>
-    new Promise((resolve) => {
+): Promise<{ code: number; output: string }> =>
+  new Promise((resolve) => {
       const child = spawn(command, args, { cwd, shell: true });
       let output = "";
       child.stdout.on("data", (data) => {
@@ -173,7 +171,6 @@ const extractDiff = (response: string) => {
 };
 
 fastify.register(cors, { origin: true });
-fastify.register(sse);
 
 fastify.get("/health", async () => ({ ok: true }));
 
@@ -271,22 +268,32 @@ fastify.get("/projects/:id/logs", async (request, reply) => {
   const { id } = request.params as { id: string };
   const running = runningPreviews.get(id);
   const buffer = running?.buffer ?? [];
-  reply.sse((async function* () {
-    if (buffer.length) {
-      yield { event: "log", data: buffer.join("") };
-    }
-    const handler = (line: string) => {
-      reply.sse({ event: "log", data: line });
-    };
-    logBus.on(`log:${id}`, handler);
+  reply.raw.writeHead(200, {
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+  });
+
+  if (buffer.length) {
+    reply.raw.write(`event: log\n`);
+    reply.raw.write(`data: ${JSON.stringify(buffer.join(""))}\n\n`);
+  }
+
+  const handler = (line: string) => {
     try {
-      while (true) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-    } finally {
-      logBus.off(`log:${id}`, handler);
+      reply.raw.write(`event: log\n`);
+      reply.raw.write(`data: ${JSON.stringify(line)}\n\n`);
+    } catch (e) {
+      /* ignore write errors */
     }
-  })());
+  };
+
+  logBus.on(`log:${id}`, handler);
+
+  const cleanup = () => logBus.off(`log:${id}`, handler);
+  request.raw.on("close", cleanup);
+
+  return new Promise(() => {});
 });
 
 const handleChat = async (
